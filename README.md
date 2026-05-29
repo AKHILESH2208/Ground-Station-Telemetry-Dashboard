@@ -43,5 +43,5 @@ Open the provided local URL (typically `http://localhost:8501`) in your web brow
 - **Interactive Map:** Displays trajectory PolyLine and start/stop positions, with specific camera icons representing the coordinates where frames were taken.
 - **Image Inspector:** Clickable select box to inspect single frames and immediate state parameters (Battery, Signal, Speed).
 
-*(Insert Demo Video Link Here)*
+#Demo- [https://drive.google.com/file/d/1QgE5Wbsdt5AfUm6QNdRXLikeCii_aaRe/view?usp=drive_link]
 # Ground-Station-Telemetry-Dashboard
