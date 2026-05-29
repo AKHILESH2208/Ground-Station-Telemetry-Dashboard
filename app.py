@@ -15,11 +15,10 @@ load_dotenv()
 # PAGE CONFIGURATION
 st.set_page_config(
     layout="wide", 
-    page_title="Ground Station Dashboard",
-    page_icon="🌊"
+    page_title="Ground Station Dashboard"
 )
 
-# CUSTOM CSS FOR GOOGLE MAPS MATERIAL DESIGN LOOK
+# CUSTOM CSS FOR PROFESSIONAL LOOK
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
@@ -27,7 +26,6 @@ st.markdown("""
     html, body, [class*="css"] {
         font-family: 'Roboto', Arial, sans-serif;
     }
-    /* Styling for metric cards to look like Google Maps Info Cards */
     div[data-testid="metric-container"] {
         background-color: #ffffff;
         border: 1px solid #dadce0;
@@ -35,16 +33,13 @@ st.markdown("""
         border-radius: 8px;
         box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
     }
-    /* Hide top padding */
     .block-container {
         padding-top: 1.5rem;
     }
-    /* Make headers match Google Maps */
     h1, h2, h3 {
         color: #202124 !important;
         font-weight: 400;
     }
-    /* Sidebar Styling */
     [data-testid="stSidebar"] {
         box-shadow: 2px 0 8px rgba(0,0,0,0.1);
     }
@@ -61,15 +56,12 @@ def load_data():
         telemetry = pd.read_csv("dataset/telemetry.csv")
         images = pd.read_csv("dataset/image_timestamps.csv")
         
-        # Parse datetimes
         telemetry['timestamp'] = pd.to_datetime(telemetry['timestamp'])
         images['timestamp'] = pd.to_datetime(images['timestamp'])
         
-        # Handle missing or inconsistent records
         telemetry = telemetry.dropna(subset=['lat', 'lon', 'timestamp'])
         telemetry = telemetry.sort_values("timestamp").reset_index(drop=True)
         
-        # Gracefully handle missing values in other critical numerical columns
         if 'speed' in telemetry.columns:
             telemetry['speed'] = telemetry['speed'].fillna(0.0)
         if 'battery' in telemetry.columns:
@@ -83,7 +75,6 @@ def load_data():
         return pd.DataFrame(), pd.DataFrame()
     
 def calculate_distance(lat1, lon1, lat2, lon2):
-    """Haversine formula to calculate distance in km"""
     R = 6371.0
     lat1, lon1, lat2, lon2 = map(np.radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1
@@ -97,26 +88,22 @@ telemetry_df, images_df = load_data()
 if telemetry_df.empty or images_df.empty:
     st.stop()
 
-# Compute vehicle parameters
 telemetry_df['distance_km'] = calculate_distance(
     telemetry_df['lat'].shift(), telemetry_df['lon'].shift(),
     telemetry_df['lat'], telemetry_df['lon']
 ).fillna(0)
 
-# Mission Metrics
 total_distance = telemetry_df['distance_km'].sum()
 avg_speed = telemetry_df['speed'].mean()
 max_speed = telemetry_df['speed'].max()
 mission_duration = telemetry_df['timestamp'].max() - telemetry_df['timestamp'].min()
 
-# Packet statistics
 expected_packets = telemetry_df['packet_id'].max() - telemetry_df['packet_id'].min() + 1
 received_packets = telemetry_df['packet_id'].nunique()
 missing_packets = expected_packets - received_packets
 packet_loss_pct = (missing_packets / expected_packets) * 100 if expected_packets > 0 else 0
 health_status = "OPTIMAL" if packet_loss_pct < 5 else "WARNING" if packet_loss_pct < 15 else "CRITICAL"
 
-# Sync Data
 images_df = images_df.sort_values("timestamp")
 telemetry_df = telemetry_df.sort_values("timestamp")
 synced_df = pd.merge_asof(
@@ -129,18 +116,13 @@ synced_df = pd.merge_asof(
 # APP LAYOUT & SIDEBAR
 # ------------------------------------------------------------------ #
 
-# Sidebar Navigation
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2855/2855588.png", width=60) # Placeholder generic drone/ocean icon
 st.sidebar.title("Ground Control Station")
 st.sidebar.markdown("---")
 page = st.sidebar.radio("Navigation", ["Overview", "Telemetry Map", "Data Logs & Validation"])
 
-# Sidebar live status feed
 st.sidebar.markdown("### Live Status")
-# Grabbing the last known state
 current_state = telemetry_df.iloc[-1]
 st.sidebar.metric("Battery Level", f"{current_state['battery']}%")
-# Clamp the battery value between 0.0 and 1.0 for the progress bar
 battery_val = max(0.0, min(1.0, current_state['battery'] / 100.0))
 st.sidebar.progress(battery_val)
 
@@ -154,12 +136,11 @@ if page == "Overview":
     st.title("Mission Overview")
     st.markdown("Real-time aggregated analytics and status for the underwater vehicle.")
     
-    st.markdown("### 🚁 Flight Metrics")
+    st.markdown("### Flight Metrics")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Total Distance", f"{total_distance*1000:.1f} m", delta="Completed")
     with col2:
-         # format duration neatly to avoid text cutoff (e.g. HH:MM:SS)
          tot_sec = int(mission_duration.total_seconds())
          hours, remainder = divmod(tot_sec, 3600)
          minutes, seconds = divmod(remainder, 60)
@@ -167,7 +148,6 @@ if page == "Overview":
              dur_str = f"{hours:02d}h {minutes:02d}m {seconds:02d}s"
          else:
              dur_str = f"{minutes:02d}m {seconds:02d}s"
-             
          st.metric("Mission Duration", dur_str)
     with col3:
         st.metric("Average Speed", f"{avg_speed:.2f} m/s")
@@ -176,7 +156,7 @@ if page == "Overview":
         
     st.markdown("<br>", unsafe_allow_html=True)
     
-    st.markdown("### 📡 Communication Health")
+    st.markdown("### Communication Health")
     col5, col6, col7, col8 = st.columns(4)
     
     health_color = "normal" if health_status == "OPTIMAL" else "off" if health_status == "WARNING" else "inverse"
@@ -199,40 +179,30 @@ elif page == "Telemetry Map":
     map_view = st.radio("Select Map Engine:", ["3D Map (Cesium)", "2D Map (Folium)"], horizontal=True)
 
     if map_view == "2D Map (Folium)":
-        # Folium Map Setup
         center_lat = telemetry_df['lat'].mean()
         center_lon = telemetry_df['lon'].mean()
         
-        # Base map
         m = folium.Map(location=[center_lat, center_lon], zoom_start=18, tiles=None)
-        
-        # Google Maps layers
         folium.TileLayer(
             tiles='http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}',
             attr='Google',
             name='Google Maps (Standard)',
             max_zoom=20
         ).add_to(m)
-        
         folium.TileLayer(
             tiles='http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}',
             attr='Google',
             name='Google Maps (Satellite)',
             max_zoom=20
         ).add_to(m)
-        
-        # Allow toggling layers
         folium.LayerControl().add_to(m)
         
-        # Background Track
         points = list(zip(telemetry_df['lat'], telemetry_df['lon']))
         folium.PolyLine(points, color="#1a73e8", weight=6, opacity=0.9, tooltip="Vehicle Trajectory").add_to(m)
         
-        # Start/End nodes
-        folium.Marker(points[0], popup="Start", icon=folium.Icon(color="green", icon="play")).add_to(m)
-        folium.Marker(points[-1], popup="End", icon=folium.Icon(color="red", icon="stop")).add_to(m)
+        folium.Marker(points[0], popup="Start").add_to(m)
+        folium.Marker(points[-1], popup="End").add_to(m)
         
-        # Add synced camera markers
         for _, row in synced_df.iterrows():
             html_popup = f"""
             <div style="font-family: Arial; font-size: 12px;">
@@ -256,10 +226,9 @@ elif page == "Telemetry Map":
         st_map = st_folium(m, width=1200, height=500)
 
     else:
-        # Cesium 3D Map Setup
         cesium_token = os.getenv("CESIUM_ION_TOKEN", "")
         if not cesium_token:
-            st.info("💡 Tip: Add `CESIUM_ION_TOKEN=your_token` to the `.env` file to enable high-res 3D satellite tiles.")
+            st.info("Tip: Add CESIUM_ION_TOKEN=your_token to the .env file to enable high-res 3D satellite tiles.")
 
         path_coords = []
         for _, row in telemetry_df.iterrows():
@@ -267,7 +236,6 @@ elif page == "Telemetry Map":
         
         markers_js = ""
         for _, row in synced_df.iterrows():
-            # encode image to base64 to inject it securely right into the offline Cesium HTML
             image_path = os.path.join("dataset/frames", row['image_name'])
             img_data_uri = ""
             if os.path.exists(image_path):
@@ -294,15 +262,17 @@ elif page == "Telemetry Map":
                     pixelSize: 12,
                     color: Cesium.Color.ORANGE,
                     outlineColor: Cesium.Color.WHITE,
-                    outlineWidth: 2
+                    outlineWidth: 2,
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                 }},
                 label: {{
-                    text: '📷 {row['image_name']}',
+                    text: 'IMG: {row['image_name']}',
                     font: '14pt sans-serif',
                     style: Cesium.LabelStyle.FILL_AND_OUTLINE,
                     outlineWidth: 2,
                     verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                    pixelOffset: new Cesium.Cartesian2(0, -9)
+                    pixelOffset: new Cesium.Cartesian2(0, -15),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                 }},
                 description: '{desc_html}'
             }});
@@ -313,64 +283,90 @@ elif page == "Telemetry Map":
         <html lang="en">
         <head>
           <meta charset="utf-8">
-          <script src="https://cesium.com/downloads/cesiumjs/releases/1.107/Build/Cesium/Cesium.js"></script>
-          <link href="https://cesium.com/downloads/cesiumjs/releases/1.107/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+          <script>window.CESIUM_BASE_URL = 'https://unpkg.com/cesium@1.95.0/Build/Cesium/';</script>
+          <script src="https://unpkg.com/cesium@1.95.0/Build/Cesium/Cesium.js"></script>
+          <link href="https://unpkg.com/cesium@1.95.0/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
         </head>
-        <body style="margin: 0; padding: 0; overflow: hidden;">
+        <body style="margin: 0; padding: 0; overflow: hidden; background: #000;">
           <div id="cesiumContainer" style="width: 100vw; height: 100vh; border-radius: 8px;"></div>
           <script>
-            // Set Cesium Token if provided
-            const userToken = "{cesium_token}";
-            if (userToken) {{
-                Cesium.Ion.defaultAccessToken = userToken;
-            }} else {{
-                // Try to suppress the gigantic API warning dialog if no token is provided
-                Cesium.Ion.defaultAccessToken = '';
+            // Streamlit iframes block Web Workers via blob CORS. Disable them so Cesium renders on the main thread safely.
+            if (Cesium.FeatureDetection) {{
+                Cesium.FeatureDetection.supportsWebWorkers = function() {{ return false; }};
             }}
 
-            // Initialize the Cesium Viewer
-            const viewer = new Cesium.Viewer('cesiumContainer', {{
-                baseLayerPicker: false,
-                geocoder: false,
-                animation: false,
-                timeline: false,
-                // Fallback to basic street maps to avoid the token error if they don't have one
-                imageryProvider: userToken ? undefined : new Cesium.OpenStreetMapImageryProvider({{
-                    url : 'https://a.tile.openstreetmap.org/'
-                }})
-            }});
-
-            const pathPositions = Cesium.Cartesian3.fromDegreesArrayHeights({json.dumps(path_coords)});
-
-            const pathEntity = viewer.entities.add({{
-                polyline: {{
-                    positions: pathPositions,
-                    width: 5,
-                    material: new Cesium.PolylineGlowMaterialProperty({{
-                        glowPower: 0.2,
-                        taperPower: 0.5,
-                        color: Cesium.Color.CYAN
-                    }})
+            (async function() {{
+                const userToken = "{cesium_token}";
+                if (userToken) {{
+                    Cesium.Ion.defaultAccessToken = userToken;
                 }}
-            }});
 
-            {markers_js}
+                let activeTerrainProvider;
+                if (userToken) {{
+                    try {{
+                        activeTerrainProvider = Cesium.createWorldTerrain();
+                    }} catch (e) {{
+                        console.log("Terrain error:", e);
+                    }}
+                }}
 
-            viewer.zoomTo(viewer.entities);
+                let activeImageryProvider;
+                if (!userToken) {{
+                    activeImageryProvider = new Cesium.TileMapServiceImageryProvider({{
+                        url : Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+                    }});
+                }}
+
+                const viewer = new Cesium.Viewer('cesiumContainer', {{
+                    terrainProvider: activeTerrainProvider,
+                    baseLayerPicker: false,
+                    geocoder: false,
+                    animation: false,
+                    timeline: false,
+                    scene3DOnly: true,
+                    infoBox: false,
+                    selectionIndicator: false,
+                    imageryProvider: activeImageryProvider
+                }});
+
+                if (userToken) {{
+                    try {{
+                        viewer.scene.primitives.add(Cesium.createOsmBuildings());
+                    }} catch (e) {{
+                        console.log(e);
+                    }}
+                }}
+
+                const pathPositions = Cesium.Cartesian3.fromDegreesArrayHeights({json.dumps(path_coords)});
+
+                const pathEntity = viewer.entities.add({{
+                    name: 'Vehicle Path',
+                    polyline: {{
+                        positions: pathPositions,
+                        width: 5,
+                        clampToGround: true,
+                        material: Cesium.Color.CYAN
+                    }}
+                }});
+
+                {markers_js}
+
+                viewer.zoomTo(viewer.entities);
+            }})();
           </script>
         </body>
         </html>
         """
+
         components.html(cesium_html, height=700)
 
     st.markdown("---")
-    st.markdown("### 📷 Camera Inspection")
+    st.markdown("### Camera Inspection")
     
     selected_img = st.selectbox("Select a camera frame to inspect environment & telemetry:", synced_df['image_name'])
     
     if selected_img:
         selected_data = synced_df[synced_df['image_name'] == selected_img].iloc[0]
-        
         col_img, col_data = st.columns([1.5, 1])
         
         with col_img:
@@ -398,7 +394,6 @@ elif page == "Data Logs & Validation":
     st.title("Raw Telemetry & Synchronization Logs")
     st.markdown("Verify the raw synchronization outputs between the camera frames and the telemetry feed.")
     
-    # Formatting for neat display
     display_sync_df = synced_df[['image_name', 'timestamp', 'lat', 'lon', 'altitude', 'speed', 'battery']].copy()
     display_sync_df['timestamp'] = display_sync_df['timestamp'].dt.strftime('%H:%M:%S')
     display_sync_df.rename(columns={'altitude': 'Depth (m)', 'speed': 'Speed (m/s)', 'battery': 'Battery (%)', 'lat': 'Latitude', 'lon': 'Longitude', 'image_name': 'Image Name'}, inplace=True)
