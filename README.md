@@ -2,7 +2,7 @@
 
 ## Live Links & Demo
 - **Live Deployment**: [Streamlit App](https://ground-station-telemetry-dashboard-g9jqbmumxk5ajwlojrugrb.streamlit.app/#communication-health)
-- **Video Demo**: [Google Drive](https://drive.google.com/file/d/1QgE5Wbsdt5AfUm6QNdRXLikeCii_aaRe/view?usp=drive_link)
+- **Video Demo**: [Google Drive](https://drive.google.com/file/d/1QgE5Wbsdt5AfUm6QNdRXLikeCii_aaRe/view?usp=sharing)
 
 ## Overview
 This project provides a robust, professional Streamlit dashboard to monitor underwater vehicle telemetry, track spatial trajectories, and synchronize telemetry records with periodic camera imagery.
