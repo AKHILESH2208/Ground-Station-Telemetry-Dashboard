@@ -1,47 +1,35 @@
-# Ground Station Telemetry Dashboard
+# Underwater Vehicle Telemetry Dashboard
 
-This repository contains the software developed for the underwater robotic vehicle Ground Station Telemetry Dashboard assignment.
+## Live Links & Demo
+- **Live Deployment**: [Streamlit App](https://ground-station-telemetry-dashboard-g9jqbmumxk5ajwlojrugrb.streamlit.app/#communication-health)
+- **Video Demo**: [Google Drive](https://drive.google.com/file/d/1QgE5Wbsdt5AfUm6QNdRXLikeCii_aaRe/view?usp=drive_link)
 
 ## Overview
+This project provides a robust, professional Streamlit dashboard to monitor underwater vehicle telemetry, track spatial trajectories, and synchronize telemetry records with periodic camera imagery.
 
-The dashboard is built using [Streamlit](https://streamlit.io/) to provide a highly interactive and easy-to-use web interface that visualizes telemetry data and synchronizes it with camera frames captured during the mission. 
+## Features
+- **Real-Time Data Parsing**: Automatically filters and interpolates missing telemetry elements, maintaining application stability.
+- **Mission Profiling**: Calculates Haversine distance tracking and evaluates communication network performance.
+- **High-Fidelity 3D Virtual Environment**: Reconstructs vehicle location mapping in 3D using Cesium JS with integrated World Terrain Providers.
+- **Google Maps 2D Mode**: Integrates folium for 2D map projections via Google Map Standard/Satellite layers.
+- **Synchronization**: Employs pandas `merge_asof` to align loose image capture triggers with streaming GPS feeds.
+- **Responsive UI**: Professional Google-styled UI with zero emojis, custom CSS typography, and clean statistics.
 
-It accomplishes the following tasks:
-1. **Telemetry Processing:** Calculates and displays total distance traveled, average speed, max speed, mission duration, missing packets, and communication health.
-2. **Camera-Telemetry Synchronization:** Matches image timestamps to the nearest telemetry timestamp using `pandas.merge_asof`.
-3. **Ground Station Dashboard:** Displays an interactive map (via Folium) for visualizing the vehicle's trajectory along with camera markers, and enables viewing specific images alongside their synchronized telemetry.
-
-## Structure
-
-- `app.py`: Main Streamlit application containing data processing, synchronization, and UI layout.
-- `dataset/`: Contains `telemetry.csv`, `image_timestamps.csv`, and the `frames/` folder.
-- `requirements.txt`: Python package dependencies.
-
-## Installation
-
-Create a virtual environment and load dependencies:
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+## Setup and Execution
+1. Create a virtual environment:
 ```
-
-## Running the Application
-
-To launch the dashboard, use the `streamlit run` command:
-
-```bash
+python -m venv venv
+source venv/bin/activate
+```
+2. Install dependencies:
+```
+pip install streamlit pandas numpy folium streamlit-folium python-dotenv
+```
+3. Add API tokens (create `.env`):
+```
+CESIUM_ION_TOKEN=your_token_here
+```
+4. Run:
+```
 streamlit run app.py
 ```
-
-Open the provided local URL (typically `http://localhost:8501`) in your web browser.
-
-## Features & Deliverables
-- **Mission Statistics View:** Shows critical metrics automatically calculated from standard inputs, effectively handling lost packets or invalid records.
-- **Data Table view:** Maps every given image to its exact vehicle state.
-- **Interactive Map:** Displays trajectory PolyLine and start/stop positions, with specific camera icons representing the coordinates where frames were taken.
-- **Image Inspector:** Clickable select box to inspect single frames and immediate state parameters (Battery, Signal, Speed).
-
-#Demo- [https://drive.google.com/file/d/1QgE5Wbsdt5AfUm6QNdRXLikeCii_aaRe/view?usp=drive_link]
-# Ground-Station-Telemetry-Dashboard
